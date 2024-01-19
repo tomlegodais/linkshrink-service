@@ -1,0 +1,20 @@
+[flake8]
+exclude =
+    .git,
+    __pycache__,
+    venv,
+    .venv,
+    build,
+    dist,
+    alembic
+
+per-file-ignores =
+    __init__.py: F401
+
+max-line-length = 120
+select = E,W,F,C,N
+ignore = E203, E266, W503, W504
+max-complexity = 10
+statistics = True
+show-source = True
+format = '%(path)s:%(row)d:%(col)d: %(code)s %(text)s'
