@@ -1,4 +1,8 @@
 version: '3.8'
+networks:
+  default:
+    name: linkshrink-network
+    external: true
 services:
   app:
     build: .
@@ -10,7 +14,6 @@ services:
     depends_on:
       - db
       - redis
-
   db:
     image: postgres
     environment:
@@ -27,7 +30,6 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-
 volumes:
   linkshrink-db:
   redis-data:
