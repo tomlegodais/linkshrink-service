@@ -12,17 +12,20 @@ class RedisService:
         self.expiry_time = expiry_time
 
     @staticmethod
-    def __get_cache_key(client_id: str, url: str) -> str:
+    def __get_cache_key(url: str, client_id: str = None) -> str:
         url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()
-        return f'{client_id}:{url_hash}'
+        cache_key = url_hash
+        if client_id:
+            cache_key = f'{client_id}:{cache_key}'
+        return cache_key
 
-    async def get_url_response(self, client_id: str, url: str) -> URLResponse | None:
-        cache_key = self.__get_cache_key(client_id, url)
+    async def get_url_response(self, url: str, client_id: str = None) -> URLResponse | None:
+        cache_key = self.__get_cache_key(url, client_id)
         serialized_data = await self.redis_client.get(cache_key)
         return URLResponse.model_validate_json(serialized_data) if serialized_data else None
 
-    async def set_url_response(self, client_id: str, key_value: str, url_response: URLResponse) -> None:
-        cache_key = self.__get_cache_key(client_id, key_value)
+    async def set_url_response(self, key_value: str, url_response: URLResponse, client_id: str = None) -> None:
+        cache_key = self.__get_cache_key(key_value, client_id)
         serialized_data = url_response.model_dump_json()
         await self.redis_client.set(cache_key, serialized_data, ex=self.expiry_time)
 

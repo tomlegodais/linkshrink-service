@@ -1,5 +1,4 @@
 from datetime import datetime, timezone, timedelta
-from operator import or_
 from typing import Type, Optional
 
 from fastapi import Depends
@@ -35,13 +34,20 @@ class DatabaseService:
         self.commit_and_refresh(url_counter)
         return url_counter.last_id
 
-    def get_url_metadata(self, client_id: str, short_or_long_url: str) -> URLMetadata | None:
+    def find_by_long_url(self, client_id: str, long_url: str) -> URLMetadata | None:
         expired_time = datetime.now(timezone.utc) - timedelta(days=90)
         return (self.session
                 .query(URLMetadata)
                 .filter(and_(URLMetadata.client_id == client_id,
-                             or_(URLMetadata.long_url == short_or_long_url,
-                                 URLMetadata.short_url == short_or_long_url),
+                             URLMetadata.long_url == long_url,
+                             URLMetadata.created_at > expired_time))
+                .first())
+
+    def find_by_short_url(self, short_url: str) -> URLMetadata | None:
+        expired_time = datetime.now(timezone.utc) - timedelta(days=90)
+        return (self.session
+                .query(URLMetadata)
+                .filter(and_(URLMetadata.short_url == short_url,
                              URLMetadata.created_at > expired_time))
                 .first())
 

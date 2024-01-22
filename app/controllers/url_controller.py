@@ -15,11 +15,9 @@ async def find_all(http_request: HttpRequest,
 
 
 @router.get(path="/{short_url}", response_model=URLResponse)
-async def find_by_short_url(http_request: HttpRequest,
-                            short_url: str,
+async def find_by_short_url(short_url: str,
                             url_service: URLService = Depends(get_url_service)) -> URLResponse:
-    client_id = http_request.state.client_id
-    url_response = await url_service.get_long_url(client_id, short_url)
+    url_response = await url_service.get_long_url(short_url)
     if not url_response:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL not found")
     return url_response

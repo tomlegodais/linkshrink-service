@@ -30,19 +30,22 @@ class URLService:
         return select_random_sampling(base58_encoded, length)
 
     async def _get_and_cache_metadata(self,
-                                      client_id: str,
                                       url: str,
-                                      database_fn: Callable[[str, str], URLMetadata]) -> URLResponse | None:
-        url_metadata = database_fn(client_id, url)
+                                      database_fn: Callable[[], URLMetadata],
+                                      client_id: str = None) -> URLResponse | None:
+        url_metadata = database_fn()
         if url_metadata:
             url_response = URLResponse.model_validate(url_metadata)
-            await self.redis_service.set_url_response(client_id, url, url_response)
+            await self.redis_service.set_url_response(url, url_response, client_id)
             return url_response
         return None
 
     async def create_url_response(self, client_id: str, long_url: str) -> Tuple[URLResponse, bool]:
-        url_response = (await self.redis_service.get_url_response(client_id, long_url) or
-                        await self._get_and_cache_metadata(client_id, long_url, self.database_service.get_url_metadata))
+        url_response = (await self.redis_service.get_url_response(long_url, client_id) or
+                        await self._get_and_cache_metadata(long_url,
+                                                           lambda: self.database_service.find_by_long_url(client_id,
+                                                                                                          long_url),
+                                                           client_id))
 
         if url_response:
             return url_response, False
@@ -52,13 +55,13 @@ class URLService:
         self.database_service.add_and_refresh(url_metadata)
 
         url_response = URLResponse.model_validate(url_metadata)
-        await self.redis_service.set_url_response(client_id, url_response.long_url, url_response)
+        await self.redis_service.set_url_response(url_response.long_url, url_response, client_id)
         return url_response, True
 
-    async def get_long_url(self, client_id: str, short_url: str) -> URLResponse | None:
-        url_response = (await self.redis_service.get_url_response(client_id, short_url) or
-                        await self._get_and_cache_metadata(client_id, short_url,
-                                                           self.database_service.get_url_metadata))
+    async def get_long_url(self, short_url: str) -> URLResponse | None:
+        url_response = (await self.redis_service.get_url_response(short_url) or
+                        await self._get_and_cache_metadata(short_url,
+                                                           lambda: self.database_service.find_by_short_url(short_url)))
         return url_response if url_response else None
 
 
