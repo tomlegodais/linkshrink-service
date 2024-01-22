@@ -6,8 +6,14 @@ from starlette.responses import Response
 
 
 def _get_client_id(request: Request) -> str:
-    client_host = request.client.host
-    return hashlib.sha256(f'{client_host}'.encode('utf-8')).hexdigest()
+    client_host = request.headers.get('X-Forwarded-For')
+    print(f'client_host (header): {client_host}')
+
+    if not client_host:
+        client_host = request.client.host
+        print(f'client_host (client): {client_host}')
+
+    return hashlib.sha256(client_host.encode('utf-8')).hexdigest()
 
 
 class AttachClientMiddleware(BaseHTTPMiddleware):
