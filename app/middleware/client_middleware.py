@@ -1,9 +1,10 @@
 import hashlib
 
-from slowapi.util import get_ipaddr
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
+
+from utils import get_ipaddr
 
 
 def _get_client_id(request: Request) -> str:
