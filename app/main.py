@@ -2,14 +2,14 @@ from fastapi import FastAPI
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
+from slowapi.util import get_ipaddr
 from starlette.middleware.cors import CORSMiddleware
 
 from controllers import root_router, url_router
 from core import Config
 from middleware import AttachClientMiddleware
 
-limiter = Limiter(key_func=get_remote_address,
+limiter = Limiter(key_func=get_ipaddr,
                   default_limits=["10/minute"],
                   storage_uri=f'{Config.REDIS_URL}/0')
 

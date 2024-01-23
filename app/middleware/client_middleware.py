@@ -1,16 +1,14 @@
 import hashlib
 
+from slowapi.util import get_ipaddr
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 
 
 def _get_client_id(request: Request) -> str:
-    client_host = request.headers.get('X-Forwarded-For')
-    if not client_host:
-        client_host = request.client.host
-
-    return hashlib.sha256(client_host.encode('utf-8')).hexdigest()
+    ip_addr = get_ipaddr(request)
+    return hashlib.sha256(ip_addr.encode('utf-8')).hexdigest()
 
 
 class AttachClientMiddleware(BaseHTTPMiddleware):
