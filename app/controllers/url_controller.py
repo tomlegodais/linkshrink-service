@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from starlette.requests import Request as HttpRequest
-from starlette.responses import Response as HttpResponse, RedirectResponse
+from starlette.responses import Response as HttpResponse
 
 from schemas import URLResponse, ShrinkRequest
 from services import URLService, get_url_service
@@ -14,15 +14,13 @@ async def find_all(http_request: HttpRequest,
     return url_service.find_all(http_request.state.client_id)
 
 
-@router.get(path="/redirect", response_model=None)
-async def redirect(http_request: HttpRequest,
-                   short_url: str = Query(..., min_length=6, max_length=6),
-                   url_service: URLService = Depends(get_url_service)):
-    client_id = http_request.state.client_id
-    url_response = await url_service.get_long_url(client_id, short_url)
+@router.get(path="/{short_url}", response_model=URLResponse)
+async def find_by_short_url(short_url: str,
+                            url_service: URLService = Depends(get_url_service)) -> URLResponse:
+    url_response = await url_service.get_long_url(short_url)
     if not url_response:
-        return HttpResponse(status_code=status.HTTP_404_NOT_FOUND)
-    return RedirectResponse(url=url_response.long_url)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL not found")
+    return url_response
 
 
 @router.post("/shrink", response_model=URLResponse)
